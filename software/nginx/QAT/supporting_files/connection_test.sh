@@ -25,6 +25,7 @@ if [[ -z $ip_address || $@ == *-h* || $@ == *--help* ]]; then
 fi
 
 # Check for emulation flag
+emulation=0
 if [[ $@ == **emulation** ]]
 then
         emulation=1
@@ -47,7 +48,7 @@ printf " Cipher:                        $cipher\n"
 rm -rf ./.test_*
 
 # Get starttime
-starttime=$(date +\%s)
+starttime=$(date +%s)
 
 # Kick off the tests after checking for emulation
 if [[ $emulation -eq 1 ]]
@@ -65,11 +66,9 @@ fi
 waitstarttime=$(date +%s)
 
 # wait until all processes complete
-# The bracketed first character keeps grep from matching its own command line.
-while [ $(ps -ef | grep -c "[o]penssl s_time") != 0 ];
-do
-        sleep 1
-done
+# The clients are child processes of this script, so wait returns once every
+# one of them has exited.
+wait
 
 sumTotal=$(cat ./.test_$(($port))* | awk '(/^[0-9]* connections in [0-9]* real/){ total += $1/$4 } END {print total}')
 printf "Connections per second:      $sumTotal CPS\n"

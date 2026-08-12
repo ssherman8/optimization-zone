@@ -28,7 +28,11 @@ At least one Intel® QAT engine is required and the individual engine might need
 1.  Check for QAT device availability.  This can be verified by running the following command:
 
 ```
-echo `(lspci -d 8086:4940 && lspci -d 8086:4941 && lspci -d 8086:4942 && lspci -d 8086:4943 && lspci -d 8086:4944 && lspci -d 8086:4945 && lspci -d 8086:4946 && lspci -d 8086:4947) | wc -l` supported devices found.
+count=0
+for id in 4940 4941 4942 4943 4944 4945 4946 4947; do
+        count=$((count + $(lspci -d 8086:$id 2>/dev/null | wc -l)))
+done
+echo "$count supported devices found."
 ```
 
 The command reports how many supported devices were found.  At least one is required.  On the system used for this benchmarking, the output was:
@@ -122,7 +126,7 @@ Each QAT device is configured by a `/etc/4xxx_dev*.conf` file, and the `Services
 | `sym;dc` | Symmetric crypto and compression |
 | `asym;dc` | Asymmetric crypto and compression |
 
-This matters because the two optimizations in this guide use different services.  The qatzip module (`ngx_http_qatzip_filter_module`) needs `dc`, while QATEngine handling TLS handshakes (`ngx_ssl_engine_qat_module`) needs the crypto services.  A device left at the compression-only default will not accelerate TLS, and the CPS results below cannot be reproduced on it.
+This matters because the two optimizations in this guide use different services.  The qatzip module (`ngx_http_qatzip_filter_module`) needs `dc`, while QATEngine handling TLS handshakes (`ngx_ssl_engine_qat_module`) needs the crypto services.  A device left at the compression-only default will not accelerate TLS, and the Connections Per Second (CPS) results below cannot be reproduced on it.
 
 Check the current setting:
 
