@@ -7,6 +7,8 @@
   - [Enabling the Required QAT Services](#enabling-the-required-qat-services)
 - [async-mode-nginx Configuration](#async-mode-nginx-configuration)
 - [Building and configuring async-mode-nginx](#building-and-configuring-async-mode-nginx)
+  - [Required Environment Variables](#required-environment-variables)
+  - [Building](#building)
   - [Generating the Server Certificate](#generating-the-server-certificate)
   - [Validating the Configuration](#validating-the-configuration)
 - [Supporting Files](#supporting-files)
@@ -92,7 +94,15 @@ sudo modprobe intel_qat
 sudo modprobe qat_4xxx
 ```
 
-If the kernel modules could not be installed, it might be needed to either install them through a kernel configuration or to install them with the distribution's package manager.
+If `modprobe` fails, the driver is most likely not built in the running kernel.  Confirm which QAT drivers the kernel was configured with:
+
+```
+grep -i qat /boot/config-$(uname -r)
+```
+
+The device you are using needs its driver built either as a module (`=m`, loadable with `modprobe`) or built in (`=y`).  For the 4xxx-series devices this guide targets, that is `CONFIG_CRYPTO_DEV_QAT` plus the device-specific option — `CONFIG_CRYPTO_DEV_QAT_4XXX`, `CONFIG_CRYPTO_DEV_QAT_402XX`, or `CONFIG_CRYPTO_DEV_QAT_420XX`.  If the option is absent or set to `n`, the fix is a kernel that includes it: a newer distribution kernel, a vendor kernel, or a locally rebuilt kernel with the option enabled.
+
+Each device generation also has a minimum kernel version — v5.15.3+ for 4xxx, v6.4+ for 402xx, and v6.8+ for 420xx — so a kernel older than that will not have the driver regardless of configuration.  The [QATlib System Requirements](https://intel.github.io/quickassist/qatlib/requirements.html) page documents the full kernel, firmware, and boot-parameter requirements, including the per-device minimum kernel versions and the `intel_iommu=on` boot parameter noted below.
 
 ## QAT Software Requirement and Prerequisites
 
@@ -167,7 +177,31 @@ sudo -E apt install -y qatengine
 
 ## Building and configuring async-mode-nginx
 
-[async-mode-nginx](https://github.com/intel/asynch_mode_nginx) can be built with:
+### Required Environment Variables
+
+The `./configure` line below is the one [async-mode-nginx](https://github.com/intel/asynch_mode_nginx) documents, and it expects four variables to be exported in the shell first.  Nothing sets them for you, and configure will fail on missing headers if they are unset:
+
+| Variable | Points to |
+| --- | --- |
+| `NGINX_INSTALL_DIR` | Where NGINX will be installed, used as the `--prefix`.  The configuration files in `supporting_files/` assume `/usr/local/nginx_qat_module`. |
+| `OPENSSL_LIB` | The OpenSSL installation to build against.  Its headers are expected at `$OPENSSL_LIB/include` and its libraries at `$OPENSSL_LIB/lib64`. |
+| `ICP_ROOT` | The root of the QAT user space source tree, providing the QAT API headers at `$ICP_ROOT/quickassist/include`.  For [qatlib](https://github.com/intel/qatlib), this is the top of the cloned repository. |
+| `QZ_ROOT` | The root of the [QATzip](https://github.com/intel/QATzip) source tree, providing `$QZ_ROOT/include` and the `libqatzip` build output in `$QZ_ROOT/src`. |
+
+The `ICP_ROOT` and `QZ_ROOT` paths are source trees, so building the NGINX modules requires qatlib and QATzip checked out and built from source even though the runtime libraries installed earlier came from packages.  For example:
+
+```
+export NGINX_INSTALL_DIR=/usr/local/nginx_qat_module
+export OPENSSL_LIB=/usr/local/ssl
+export ICP_ROOT=$HOME/qatlib
+export QZ_ROOT=$HOME/QATzip
+```
+
+Adjust these to match where you unpacked and built each component.  The `lib64` in the link flags reflects a source-installed OpenSSL layout; if you point `OPENSSL_LIB` at a distribution-packaged OpenSSL instead, correct those paths to that distribution's library directory (`/usr/lib/x86_64-linux-gnu` on Ubuntu 24.04).
+
+### Building
+
+async-mode-nginx can then be built with:
 
 ```
 ./configure \
