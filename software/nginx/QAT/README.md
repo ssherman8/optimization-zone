@@ -126,7 +126,9 @@ Please note that "intel_iommu=on" will be required as a kernel parameter.
 
 ### Enabling the Required QAT Services
 
-Each QAT device is configured by a `/etc/4xxx_dev*.conf` file, and the `ServicesEnabled` setting in the `[GENERAL]` section controls which acceleration services that device exposes.  This setting must include the services your workload actually uses:
+Each QAT device can be configured in either [Managed Mode](https://intel.github.io/quickassist/qatlib/configuration.html#managed-mode) — the preferred method for this application — or [Standalone Mode](https://intel.github.io/quickassist/qatlib/configuration.html#standalone-mode).  The two main parameters configured in `/etc/sysconfig/qat` are `POLICY` and `ServicesEnabled`.
+
+`POLICY` indicates how many Virtual Functions (VFs) will be assigned to each process.  `ServicesEnabled` is set based on the following table.
 
 | ServicesEnabled | Services available |
 | --- | --- |
@@ -136,25 +138,27 @@ Each QAT device is configured by a `/etc/4xxx_dev*.conf` file, and the `Services
 | `sym;dc` | Symmetric crypto and compression |
 | `asym;dc` | Asymmetric crypto and compression |
 
-This matters because the two optimizations in this guide use different services.  The qatzip module (`ngx_http_qatzip_filter_module`) needs `dc`, while QATEngine handling TLS handshakes (`ngx_ssl_engine_qat_module`) needs the crypto services.  A device left at the compression-only default will not accelerate TLS, and the Connections Per Second (CPS) results below cannot be reproduced on it.
+This matters because the two optimizations in this guide use different services.  The qatzip module (`ngx_http_qatzip_filter_module`) needs `dc`, while QATEngine handling TLS handshakes (`ngx_ssl_engine_qat_module`) needs the crypto services.  A device whose PFs are left at the default service mix will not reliably accelerate TLS, and the Connections Per Second (CPS) results below cannot be reproduced on it.
 
-Check the current setting:
-
-```
-grep -H ServicesEnabled /etc/4xxx_dev*.conf
-```
-
-To use both compression and TLS acceleration, set the following in each device's `[GENERAL]` section:
+The suggested `/etc/sysconfig/qat` for this application:
 
 ```
-ServicesEnabled = asym;dc
+POLICY=1
+ServicesEnabled=asym;dc
 ```
 
-Then restart the service and confirm the devices come back up:
+After editing the `/etc/sysconfig/qat` file, the QAT configuration can be updated with the following command.
 
 ```
-sudo systemctl restart qat.service
-sudo systemctl status qat.service
+sudo systemctl restart qat
+```
+
+The [qat script](https://intel.github.io/quickassist/_downloads/74bdfa2cd6bb4987b51a4f550d8f26ba/qat) can be used to configure the QAT devices without having to edit `/etc/sysconfig/qat`.  This is described in further detail [here](https://intel.github.io/quickassist/qatlib/configuration.html#qat-script).
+
+That same script also reports the configuration that is currently live on each VF, which is a quick way to confirm the change took effect:
+
+```
+qat --status
 ```
 
 Note that the available `ServicesEnabled` combinations vary by QAT generation, and not all services can be enabled on a single device simultaneously.  See the [QATLib Users Guide](https://intel.github.io/quickassist/qatlib/index.html) for the combinations supported by your hardware.

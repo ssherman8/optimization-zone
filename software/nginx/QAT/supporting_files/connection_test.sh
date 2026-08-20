@@ -1,4 +1,8 @@
 #!/bin/bash
+# For use with intel/asynch_mode_nginx, which is licensed under the
+# BSD 3-Clause License.
+# See https://github.com/intel/asynch_mode_nginx/blob/master/LICENSE
+
 ######################################
 ############# USER INPUT #############
 ######################################
