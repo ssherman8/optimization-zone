@@ -23,7 +23,9 @@ greatest effect. Always confirm the topology reported on a running instance with
   including per-size socket and NUMA node counts versus the 6i and 7i generations.
 - [GNR (C4) on GCP](gcp_gnr.md): NUMA and compute-die topology of the Google Cloud C4 machine
   series on Granite Rapids, including per-shape node counts versus C3.
+- [Cross-Cloud Comparison](cross_cloud.md): AWS 8i versus GCP C4-GNR side by side, plus portability
+  guidance.
 
-Both documents share a cross-cloud comparison table covering the key portability concern: a NUMA
-node is 32 cores on AWS 8i but 24 cores on GCP C4, so thread pools and pinning logic should be
-derived from the node width reported at runtime rather than assumed from a socket count.
+The cross-cloud document covers the key portability concern: a NUMA node is 32 cores on AWS 8i but
+24 cores on GCP C4, so thread pools and pinning logic should be derived from the node width reported
+at runtime rather than assumed from a socket count.

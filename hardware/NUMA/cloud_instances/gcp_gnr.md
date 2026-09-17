@@ -4,7 +4,8 @@ Notes on Google Cloud's Intel-based machine series, focused on **C4 with Intel X
 (Granite Rapids)**: NUMA/compute-die topology, the SPR→GNR single-socket delta, and the
 shape/feature comparison against C4-EMR.
 
-See also: [GNR (8i) on AWS](aws_gnr.md) — the same processor generation on AWS.
+See also: [GNR (8i) on AWS](aws_gnr.md) — the same processor generation on AWS — and
+[Cross-Cloud Comparison](cross_cloud.md) for the AWS-versus-GCP node-width differences.
 
 ---
 
@@ -29,20 +30,7 @@ provides optimal memory latencies for NUMA-aware applications.
 A GNR socket contains **3 compute dies** and **12 memory channels**, plus IO dies. With **SNC3**,
 each compute die is presented as its own NUMA node:
 
-```
-                   C4-GNR socket (12 memory channels)
-
-   +-------------+   +-------------+   +-------------+
-   |  c-die 0    |   |  c-die 1    |   |  c-die 2    |
-   |  24c / 48T  |   |  24c / 48T  |   |  24c / 48T  |
-   |  4 mem ch   |   |  4 mem ch   |   |  4 mem ch   |
-   +-------------+   +-------------+   +-------------+
-     NUMA node 0       NUMA node 1       NUMA node 2
-
-   +---------------------+   +---------------------+
-   |        IO die       |   |        IO die       |
-   +---------------------+   +---------------------+
-```
+![C4-GNR socket: 3 compute dies, each 24 cores / 48 threads, each its own NUMA node](images/gcp-c4-gnr-snc3-topology.png)
 
 A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 
@@ -104,29 +92,6 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 - **`c4-standard-144` is the largest shape with no cross-socket traffic** (3 nodes, single socket).
 - Verify the topology on a running instance with `lscpu` or `numactl -H` — these are general Linux
   tools, not something the source deck specifies.
-
-### Cross-cloud comparison
-
-The same processor generation is configured differently per cloud, so a NUMA node is **not** the
-same width on AWS and GCP:
-
-| | AWS 8i | GCP C4-GNR |
-| --- | --- | --- |
-| Cores per socket | 96 | 72 |
-| vCPUs per socket | 192 | 144 |
-| NUMA nodes per socket | 3 (SNC3) | 3 (SNC3) |
-| **Cores per NUMA node** | **32** | **24** |
-| **vCPUs per NUMA node** | **64** | **48** |
-| Memory channels per socket / per node | 12 / 4 | 12 / 4 |
-| Memory speed (as stated per cloud) | DDR5-7200 | 6400 MT/s |
-| All-core turbo | 3.9 GHz | 3.9 GHz |
-| Smallest multi-node size | 24xl (96 vCPU, 2 nodes) | `c4-standard-96` (2 nodes) |
-| Largest single-socket size | 48xl (192 vCPU, 3 nodes) | `c4-standard-144` (144 vCPU, 3 nodes) |
-| Largest system | 96xl (384 vCPU, 6 nodes) | `c4-standard-288` (288 vCPU, 6 nodes) |
-
-> **Note** — code that hard-codes a 32-core NUMA node on AWS will mis-place threads on GCP, where a
-> node is 24 cores. Size thread pools and pinning from the node width reported at runtime rather
-> than from an assumed socket layout.
 
 ---
 

@@ -4,7 +4,8 @@ Notes on AWS EC2 8i instances — the Granite Rapids (Intel Xeon 6) generation �
 NUMA/SNC3 topology, plus key features, specifications versus prior generations, and the
 resulting strengths.
 
-See also: [GNR (C4) on GCP](gcp_gnr.md) — the same processor generation on Google Cloud.
+See also: [GNR (C4) on GCP](gcp_gnr.md) — the same processor generation on Google Cloud — and
+[Cross-Cloud Comparison](cross_cloud.md) for the AWS-versus-GCP node-width differences.
 
 ---
 
@@ -30,20 +31,7 @@ memory latencies for NUMA-aware applications.
 Each GNR socket contains **3 compute dies** and **12 memory channels**. With **SNC3** enabled,
 each compute die is presented as its own NUMA node:
 
-```
-                     8i socket (12 memory channels)
-
-   +-------------+   +-------------+   +-------------+
-   |  c-die 0    |   |  c-die 1    |   |  c-die 2    |
-   |  32c / 64T  |   |  32c / 64T  |   |  32c / 64T  |
-   |  4 mem ch   |   |  4 mem ch   |   |  4 mem ch   |
-   +-------------+   +-------------+   +-------------+
-     NUMA node 0       NUMA node 1       NUMA node 2
-
-   +---------------------+   +---------------------+
-   |        IO die       |   |        IO die       |
-   +---------------------+   +---------------------+
-```
+![8i socket: 3 compute dies, each 32 cores / 64 threads, each its own NUMA node](images/aws-8i-snc3-topology.png)
 
 - 32 cores / 64 threads per NUMA node
 - Memory from 4 channels attached to each node
@@ -98,29 +86,6 @@ each compute die is presented as its own NUMA node:
 - Verify the topology on a running instance with `lscpu` or `numactl -H` — these are general Linux
   tools, not something the source deck specifies.
 
-### Cross-cloud comparison
-
-The same processor generation is configured differently per cloud, so a NUMA node is **not** the
-same width on AWS and GCP:
-
-| | AWS 8i | GCP C4-GNR |
-| --- | --- | --- |
-| Cores per socket | 96 | 72 |
-| vCPUs per socket | 192 | 144 |
-| NUMA nodes per socket | 3 (SNC3) | 3 (SNC3) |
-| **Cores per NUMA node** | **32** | **24** |
-| **vCPUs per NUMA node** | **64** | **48** |
-| Memory channels per socket / per node | 12 / 4 | 12 / 4 |
-| Memory speed (as stated per cloud) | DDR5-7200 | 6400 MT/s |
-| All-core turbo | 3.9 GHz | 3.9 GHz |
-| Smallest multi-node size | 24xl (96 vCPU, 2 nodes) | `c4-standard-96` (2 nodes) |
-| Largest single-socket size | 48xl (192 vCPU, 3 nodes) | `c4-standard-144` (144 vCPU, 3 nodes) |
-| Largest system | 96xl (384 vCPU, 6 nodes) | `c4-standard-288` (288 vCPU, 6 nodes) |
-
-> **Note** — code that hard-codes a 32-core NUMA node on AWS will mis-place threads on GCP, where a
-> node is 24 cores. Size thread pools and pinning from the node width reported at runtime rather
-> than from an assumed socket layout.
-
 ---
 
 ## Intel Architecture Instance Types on AWS
@@ -141,14 +106,22 @@ workload profile:
 
 | AWS naming | Intel generation | Codename |
 | --- | --- | --- |
-| 8i (M8i, C8i, R8i, X8i, I7i…) | 6th Gen Intel Xeon Scalable | **Granite Rapids** |
-| 7i (M7i, C7i, R7i, R7iz, U7i) | 5th Gen Intel Xeon Scalable | Emerald Rapids |
-| 7i / 6th-family AMX parts | 4th Gen Intel Xeon Scalable | Sapphire Rapids |
-| 6i (M6i, C6i, R6i, X2i…) | 3rd Gen Intel Xeon Scalable | Ice Lake |
-| 5-series (M5, C5, R5, z1d) | 2nd Gen Intel Xeon Scalable | Cascade Lake |
-| 5-series (early) | Intel Xeon Scalable processors | Skylake |
-| M4, R4, X1, C4, D2 | Intel Xeon v4 | Broadwell |
-| Older | Intel Xeon v3 | Haswell |
+| 8i (M8i, C8i, R8i, X8i, plus `-flex` and `d` variants) | Intel Xeon 6 | **Granite Rapids** |
+| I7i, I7ie | 5th Gen Intel Xeon Scalable | Emerald Rapids |
+| 7i (M7i, C7i, R7i, R7iz, U7i, U7in, U7inh, plus `-flex` variants) | 4th Gen Intel Xeon Scalable | Sapphire Rapids |
+| 6i (M6i, C6i, R6i, X2idn, X2iedn, I4i) | 3rd Gen Intel Xeon Scalable | Ice Lake |
+| 5-series, later parts (M5n, R5n, X2iezn) | 2nd Gen Intel Xeon Scalable | Cascade Lake |
+| 5-series, early parts (M5, C5, R5, z1d, I3en) | Intel Xeon Scalable | Skylake |
+| M4, C4, R4, X1, D2 | Intel Xeon v3 / v4 | Haswell / Broadwell, varies by size |
+
+> **Note** — the AWS generation digit does not track the Intel generation. **I7i is Emerald Rapids,
+> one Intel generation newer than the Sapphire Rapids M7i/C7i/R7i**, because the storage-optimized
+> line numbers independently of the compute lines. No AWS `7i` compute family is Emerald Rapids at
+> all: those went Sapphire Rapids (7i) straight to Granite Rapids (8i). Confirm the processor for a
+> specific instance type in the AWS specification tables rather than inferring it from the name.
+
+> **Note** — the 8i row is **Intel Xeon 6**, not "6th Gen Intel Xeon Scalable"; Intel dropped the
+> "Nth Gen … Scalable" scheme for this generation, and AWS follows the Xeon 6 branding.
 
 ### AWS instance suffix decoder
 
@@ -162,6 +135,12 @@ workload profile:
 
 Reference: <https://aws.amazon.com/ec2/instance-types/> and
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html>
+
+The per-instance-type processor is listed in the AWS specification tables, which are the source for
+the mapping above: [general purpose](https://docs.aws.amazon.com/ec2/latest/instancetypes/gp.html),
+[compute optimized](https://docs.aws.amazon.com/ec2/latest/instancetypes/co.html),
+[memory optimized](https://docs.aws.amazon.com/ec2/latest/instancetypes/mo.html),
+[storage optimized](https://docs.aws.amazon.com/ec2/latest/instancetypes/so.html).
 
 ---
 
@@ -217,7 +196,7 @@ Comparing C7i, C8i, and C8i-flex:
 
 | | 6i | 7i | 8i |
 | --- | --- | --- | --- |
-| Micro architecture | Ice Lake | Sapphire / Emerald | **Granite Rapids** |
+| Micro architecture | Ice Lake | Sapphire Rapids | **Granite Rapids** |
 | Cores per socket | 32 | 48 | **96** |
 | vCPUs per socket | 64 | 96 | **192** |
 | Max frequency | 3.5 GHz | 3.8 GHz | **3.9 GHz** |
