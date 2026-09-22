@@ -41,24 +41,43 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 | C3 | 44 | 88 | 2 |
 | C4-GNR | 72 | 144 | **3** |
 
-### Sockets and NUMA nodes by VM size
+### Sockets by VM size
 
-| vCPUs | SPR shape (c3) | c3 sockets | c3 NUMA | GNR shape (c4-GNR) | c4 sockets | c4 NUMA |
-| --- | --- | --- | --- | --- | --- | --- |
-| 4 | `c3-standard-4` | 1 | 1 | `c4-standard-4` | 1 | 1 |
-| 8 | `c3-standard-8` | 1 | 1 | `c4-standard-8` | 1 | 1 |
-| 16 | NA | NA | NA | `c4-standard-16` | 1 | 1 |
-| 22 | `c3-standard-22` | 1 | 1 | NA | NA | NA |
-| 24 | NA | NA | NA | `c4-standard-24` | 1 | 1 |
-| 32 | NA | NA | NA | `c4-standard-32` | 1 | 1 |
-| 44 | `c3-standard-44` | 1 | 1 | NA | NA | NA |
-| 48 | NA | NA | NA | `c4-standard-48` | 1 | 1 |
-| 88 | `c3-standard-88` | 1 | 2 | NA | NA | NA |
-| 96 | NA | NA | NA | `c4-standard-96` | 1 | 2 |
-| 144 | NA | NA | NA | `c4-standard-144` | 1 | **3** |
-| 176 | `c3-standard-176` | 2 | 4 | NA | NA | NA |
-| 192 | `c3-standard-192-metal` | 2 | 4 | `c4-standard-192` | 2 | 4 |
-| 288 | NA | NA | NA | `c4-standard-288` | 2 | **6** |
+| vCPUs | SPR shape (c3) | c3 sockets | GNR shape (c4-GNR) | c4 sockets |
+| --- | --- | --- | --- | --- |
+| 4 | `c3-standard-4` | 1 | `c4-standard-4` | 1 |
+| 8 | `c3-standard-8` | 1 | `c4-standard-8` | 1 |
+| 16 | NA | NA | `c4-standard-16` | 1 |
+| 22 | `c3-standard-22` | 1 | NA | NA |
+| 24 | NA | NA | `c4-standard-24` | 1 |
+| 32 | NA | NA | `c4-standard-32` | 1 |
+| 44 | `c3-standard-44` | 1 | NA | NA |
+| 48 | NA | NA | `c4-standard-48` | 1 |
+| 88 | `c3-standard-88` | 1 | NA | NA |
+| 96 | NA | NA | `c4-standard-96` | 1 |
+| 144 | NA | NA | `c4-standard-144` | 1 |
+| 176 | `c3-standard-176` | 2 | NA | NA |
+| 192 | `c3-standard-192-metal` | 2 | `c4-standard-192` | 2 |
+| 288 | NA | NA | `c4-standard-288` | 2 |
+
+### NUMA nodes by VM size
+
+| vCPUs | SPR shape (c3) | c3 NUMA | GNR shape (c4-GNR) | c4 NUMA |
+| --- | --- | --- | --- | --- |
+| 4 | `c3-standard-4` | 1 | `c4-standard-4` | 1 |
+| 8 | `c3-standard-8` | 1 | `c4-standard-8` | 1 |
+| 16 | NA | NA | `c4-standard-16` | 1 |
+| 22 | `c3-standard-22` | 1 | NA | NA |
+| 24 | NA | NA | `c4-standard-24` | 1 |
+| 32 | NA | NA | `c4-standard-32` | 1 |
+| 44 | `c3-standard-44` | 1 | NA | NA |
+| 48 | NA | NA | `c4-standard-48` | 1 |
+| 88 | `c3-standard-88` | 2 | NA | NA |
+| 96 | NA | NA | `c4-standard-96` | 2 |
+| 144 | NA | NA | `c4-standard-144` | **3** |
+| 176 | `c3-standard-176` | 4 | NA | NA |
+| 192 | `c3-standard-192-metal` | 4 | `c4-standard-192` | 4 |
+| 288 | NA | NA | `c4-standard-288` | **6** |
 
 ### C4-GNR NUMA node and compute die layout by shape
 
@@ -125,20 +144,25 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 | **Custom shapes** | N/A | N/A |
 | **Implementation** | Shapes aligned to processor architecture, enabling maximum isolation and consistency | Shapes aligned to processor architecture, enabling maximum isolation and consistency |
 | **Frequency** | Up to 4.0 GHz (single-core max turbo) | **Up to 4.2 GHz (single-core max turbo)** |
-| **Hyperdisk Balanced** | Up to 320K IOPS, up to 10 GB/s | Up to 320K IOPS, up to 5 GB/s |
-| **Hyperdisk Extreme** | Up to 500K IOPS, up to 10 GB/s | Up to 500K IOPS, up to 10 GB/s |
-| **Hyperdisk Throughput** | Planned for post-GA | N/A |
+| **Hyperdisk Balanced** | Up to 320K IOPS, up to 10,000 MiB/s | Up to 320K IOPS, up to **12,500 MiB/s** |
+| **Hyperdisk Extreme** | Up to 500K IOPS, up to 10,000 MiB/s | Up to 500K IOPS, up to 10,000 MiB/s |
+| **Hyperdisk Throughput** | Up to 40K IOPS, up to 10,000 MiB/s | Up to 40K IOPS, up to 10,000 MiB/s |
 | **Local SSD** | Standard, Highmem (planned post-GA) | **Standard, Highmem** |
 | **Networking (standard)** | Up to 100 Gbps | Up to 100 Gbps |
 | **Networking (Tier_1)** | Up to 200 Gbps | Up to 200 Gbps |
 | **Maintenance** | Advanced maintenance | Standard maintenance |
 | **Additional features** | Sole Tenancy, compact + spread placement, Confidential Compute (post-GA) | Sole Tenancy (coming soon), spread placement |
 | **Billing / consumption** | Standard CUDs, Flex CUDs, Spot, Reservations | Standard CUDs, Flex CUDs, Spot, Reservations |
-| **Relative pricing** | 3.5% higher than N2 (+6% delta vs N4) | Priced similar to C4-EMR, with higher perf per vCPU |
-| **Relative performance** (SIR-17, perf/vCPU) | 40% better vs N2; 32% better vs C3 (+11% delta vs N4) | 32% better vs C3; higher than C4-EMR |
 
-With Titanium, C4 also offers up to **80% better CPU responsiveness** compared to previous
-generations for real-time workloads, including high-frequency workloads.
+> **Note** — the Hyperdisk rows are the per-shape ceilings from
+> [Hyperdisk performance limits](https://docs.cloud.google.com/compute/docs/disks/hyperdisk-perf-limits).
+> Google states them **per machine type, not per CPU platform**, and in MiB/s: the EMR column is
+> `c4-*-192` (the largest Emerald Rapids shape) and the GNR column is `c4-*-288`. Which shapes land on
+> which processor is documented in
+> [C4 machine series](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c4_series) —
+> `-lssd` and `-metal` shapes plus the 144- and 288-vCPU shapes are Granite Rapids, and everything else
+> is Emerald Rapids. Smaller shapes are capped well below these numbers, so check the limits table for
+> the specific shape rather than reading these as available at any size.
 
 The high performance of C4 is a good fit for:
 
@@ -156,13 +180,11 @@ capabilities, more shape options, and greater flexibility — targeting database
 real-time platforms, and inference.
 
 - **C4 with Titanium Local SSD** — new VM shapes featuring Titanium Local SSDs for I/O-intensive
-  applications, with up to **35% lower local SSD latency**.
-- **C4 Bare Metal** — for customers needing maximum control and flexibility; up to **35% better
-  performance** than previous-generation bare metal instances.
+  applications.
+- **C4 Bare Metal** — new bare metal shapes for customers needing maximum control and flexibility.
 - **Larger C4 shapes** — higher frequencies, larger cache sizes, and up to **2.2 TB of memory**,
-  featuring the **highest frequency of any Google Compute Engine VM (up to 4.2 GHz)**. Enables
-  databases, data analytics, and other memory-bound or license-constrained workloads to scale
-  effectively.
+  reaching **up to 4.2 GHz**. Enables databases, data analytics, and other memory-bound or
+  license-constrained workloads to scale effectively.
 
 ---
 

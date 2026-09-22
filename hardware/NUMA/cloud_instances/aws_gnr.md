@@ -14,7 +14,6 @@ See also: [GNR (C4) on GCP](gcp_gnr.md) — the same processor generation on Goo
 - [NUMA Topology](#numa-topology)
 - [Intel Architecture Instance Types on AWS](#intel-architecture-instance-types-on-aws)
 - [AWS GNR Instances & Key Features](#aws-gnr-instances--key-features)
-- [Instance Pricing](#instance-pricing)
 - [Specifications: 6i vs 7i vs 8i (per socket)](#specifications-6i-vs-7i-vs-8i-per-socket)
 - [Differentiation: Strengths](#differentiation-strengths)
 
@@ -45,20 +44,33 @@ each compute die is presented as its own NUMA node:
 | 7i | 48 | 96 | 1 |
 | 8i | 96 | 192 | **3** |
 
-### Sockets and NUMA nodes by VM size
+### Sockets by VM size
 
-| VM size | R6i sockets | R6i NUMA | R7i sockets | R7i NUMA | R8i sockets | R8i NUMA |
-| --- | --- | --- | --- | --- | --- | --- |
-| 4xl | 1 | 1 | 1 | 1 | 1 | 1 |
-| 8xl | 1 | 1 | 1 | 1 | 1 | 1 |
-| 12xl | 1 | 1 | 1 | 1 | 1 | 1 |
-| 16xl | 1 | 1 | 1 | 1 | 1 | 1 |
-| 24xl | 2 | 2 | 1 | 1 | 1 | 2 |
-| 32xl | 2 | 2 | NA | NA | 1 | 2 |
-| 48xl | NA | NA | 2 | 2 | 1 | 3 |
-| 96xl | NA | NA | NA | NA | 2 | 6 |
+| VM size | R6i sockets | R7i sockets | R8i sockets |
+| --- | --- | --- | --- |
+| 4xl | 1 | 1 | 1 |
+| 8xl | 1 | 1 | 1 |
+| 12xl | 1 | 1 | 1 |
+| 16xl | 1 | 1 | 1 |
+| 24xl | 2 | 1 | 1 |
+| 32xl | 2 | NA | 1 |
+| 48xl | NA | 2 | 1 |
+| 96xl | NA | NA | 2 |
 
 > **Note** — R8i reaches 48xl within a **single socket**, where R7i needs two.
+
+### NUMA nodes by VM size
+
+| VM size | R6i NUMA | R7i NUMA | R8i NUMA |
+| --- | --- | --- | --- |
+| 4xl | 1 | 1 | 1 |
+| 8xl | 1 | 1 | 1 |
+| 12xl | 1 | 1 | 1 |
+| 16xl | 1 | 1 | 1 |
+| 24xl | 2 | 1 | 2 |
+| 32xl | 2 | NA | 2 |
+| 48xl | NA | 2 | 3 |
+| 96xl | NA | NA | 6 |
 
 ### 8i NUMA node and compute die layout by VM size
 
@@ -131,7 +143,7 @@ workload profile:
 | `n` | Network and EBS optimized |
 | `e` | Extra storage or memory |
 | `z` | High performance |
-| `-flex` | Flex variant (see [pricing](#instance-pricing)) |
+| `-flex` | Flex variant (see the AWS references below) |
 
 Reference: <https://aws.amazon.com/ec2/instance-types/> and
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html>
@@ -148,10 +160,10 @@ the mapping above: [general purpose](https://docs.aws.amazon.com/ec2/latest/inst
 
 - Powered by **custom Xeon 6 processors** — 96 cores / 192 threads per socket
 - **Sustained all-core turbo frequency of 3.9 GHz**
-- **2.5x higher memory throughput** (DDR5-7200)
-- **4.6x larger L3 cache**
+- **DDR5-7200 memory across 12 channels per socket**
+- **480 MB L3 cache per socket**
 - AMX improvements
-- Network and EBS bandwidth scaled by **25%**
+- Higher network and EBS bandwidth than 7i (see the AWS specification tables linked above)
 - Two new instance sizes: **32xlarge** (versus SPR) and **96xlarge**
 
 ### vCPU-to-memory ratio by family
@@ -180,15 +192,6 @@ the mapping above: [general purpose](https://docs.aws.amazon.com/ec2/latest/inst
 | 96xlarge | 384 |
 | metal-48xl | 192 |
 | metal-96xl | 384 |
-
----
-
-## Instance Pricing
-
-Comparing C7i, C8i, and C8i-flex:
-
-- **C8i** carries roughly a **5% price increase** over the previous generation.
-- **C8i-flex** is priced **on par with the previous generation**.
 
 ---
 
