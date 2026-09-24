@@ -91,12 +91,12 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 | `c4-standard-48` | 48 | 1 | 1 | 48 | 24 | 1 full compute die |
 | `c4-standard-96` | 96 | 1 | **2** | 48 | 24 | 2 full compute dies |
 | `c4-standard-144` | 144 | 1 | **3** | 48 | 24 | Single socket (3 compute dies) |
-| `c4-standard-192` | 192 | 2 | **4** | 48 | 24 | 1 socket + 1 compute die |
+| `c4-standard-192` | 192 | 2 | **4** | 48 | 24 | 2 compute dies per socket |
 | `c4-standard-288` | 288 | 2 | **6** | 48 | 24 | Full system (6 compute dies) |
 
 > **Note** — the vCPUs/node and Cores/node columns are derived (vCPUs ÷ NUMA nodes, halved for
 > Hyper-Threading); the source deck states sockets, NUMA nodes, and die coverage directly. A
-> compute die is 24 cores, so `c4-standard-48-lssd` is 48 vCPUs = 24 cores = one full compute die.
+> compute die is 24 cores, so `c4-standard-48` is 48 vCPUs = 24 cores = one full compute die.
 
 ### Practical guidance
 
@@ -104,10 +104,9 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
   there. `c4-standard-48` is exactly one full compute die.
 - **Node width is a uniform 48 vCPUs / 24 cores** at every multi-node shape — simpler than C3,
   where a node is 44 vCPUs.
-- **`c4-standard-192` is asymmetric.** It reports 2 sockets and 4 NUMA nodes while covering
-  "1 socket + 1 compute die" — three dies on one socket and a single die on the other. The four
-  nodes are *not* evenly distributed, unlike `c3-standard-192-metal` (an even 2 sockets × 2 nodes).
-  Worth accounting for in thread placement.
+- **`c4-standard-192` is split evenly across sockets.** It reports 2 sockets and 4 NUMA nodes,
+  laid out as 2 nodes per socket, so it uses 2 of the 3 compute dies on each socket. This
+  matches the 2 sockets × 2 nodes layout of `c3-standard-192-metal`.
 - **`c4-standard-144` is the largest shape with no cross-socket traffic** (3 nodes, single socket).
 - Verify the topology on a running instance with `lscpu` or `numactl -H` — these are general Linux
   tools, not something the source deck specifies.
@@ -147,11 +146,11 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 | **Hyperdisk Balanced** | Up to 320K IOPS, up to 10,000 MiB/s | Up to 320K IOPS, up to **12,500 MiB/s** |
 | **Hyperdisk Extreme** | Up to 500K IOPS, up to 10,000 MiB/s | Up to 500K IOPS, up to 10,000 MiB/s |
 | **Hyperdisk Throughput** | Up to 40K IOPS, up to 10,000 MiB/s | Up to 40K IOPS, up to 10,000 MiB/s |
-| **Local SSD** | Standard, Highmem (planned post-GA) | **Standard, Highmem** |
+| **Local SSD** | N/A | **Standard, Highmem** |
 | **Networking (standard)** | Up to 100 Gbps | Up to 100 Gbps |
 | **Networking (Tier_1)** | Up to 200 Gbps | Up to 200 Gbps |
 | **Maintenance** | Advanced maintenance | Standard maintenance |
-| **Additional features** | Sole Tenancy, compact + spread placement, Confidential Compute (post-GA) | Sole Tenancy (coming soon), spread placement |
+| **Additional features** | Sole Tenancy, compact + spread placement | Sole Tenancy (coming soon), spread placement, Confidential Compute |
 | **Billing / consumption** | Standard CUDs, Flex CUDs, Spot, Reservations | Standard CUDs, Flex CUDs, Spot, Reservations |
 
 > **Note** — the Hyperdisk rows are the per-shape ceilings from
@@ -160,9 +159,11 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 > `c4-*-192` (the largest Emerald Rapids shape) and the GNR column is `c4-*-288`. Which shapes land on
 > which processor is documented in
 > [C4 machine series](https://docs.cloud.google.com/compute/docs/general-purpose-machines#c4_series) —
-> `-lssd` and `-metal` shapes plus the 144- and 288-vCPU shapes are Granite Rapids, and everything else
-> is Emerald Rapids. Smaller shapes are capped well below these numbers, so check the limits table for
-> the specific shape rather than reading these as available at any size.
+> `-lssd` and `-metal` shapes plus the 144- and 288-vCPU shapes are Granite Rapids (and
+> `c4-standard-192` can also be Granite Rapids). Starting an instance with
+> `--min-cpu-platform="Intel Granite Rapids"` guarantees that the C4 instance is Granite Rapids.
+> Smaller shapes are capped well below these numbers, so check the limits table for the specific
+> shape rather than reading these as available at any size.
 
 The high performance of C4 is a good fit for:
 
@@ -206,7 +207,8 @@ Example SPR instance: `c3-standard-88`  ·  Example GNR instance: `c4-standard-1
 
 ## Identifying a GNR-backed C4
 
-- C4 instances on GNR are differentiated from EMR by the **inclusion of local SSD**, or by starting
-  the instance with `--min-cpu-platform="Intel Granite Rapids"`.
+- All `-lssd` shapes are GNR, but GNR shapes without local SSD also exist (e.g.
+  `c4-standard-192`), so the reliable way to get GNR is to start the instance with
+  `--min-cpu-platform="Intel Granite Rapids"`.
 - GNR-backed C4 instance types display **"Intel Granite Rapids"** on the GCP instance page. The
   `C4` name alone **does not guarantee GNR** unless the page shows "Intel Granite Rapids".
