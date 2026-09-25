@@ -25,6 +25,10 @@ See also: [GNR (8i) on AWS](aws_gnr.md) — the same processor generation on AWS
 Each 72-core socket is presented as **3 NUMA nodes** — each with 24 cores and local memory. This
 provides optimal memory latencies for NUMA-aware applications.
 
+> **Note** — the tables in this section use `c4-standard` shape names, but the NUMA and socket
+> layout depends only on vCPU count. It applies equally to `c4-highmem` and `c4-highcpu` shapes of
+> the same size.
+
 ### SNC3 architecture
 
 A GNR socket contains **3 compute dies** and **12 memory channels**, plus IO dies. With **SNC3**,
@@ -95,8 +99,8 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
 | `c4-standard-288` | 288 | 2 | **6** | 48 | 24 | Full system (6 compute dies) |
 
 > **Note** — the vCPUs/node and Cores/node columns are derived (vCPUs ÷ NUMA nodes, halved for
-> Hyper-Threading); the source deck states sockets, NUMA nodes, and die coverage directly. A
-> compute die is 24 cores, so `c4-standard-48` is 48 vCPUs = 24 cores = one full compute die.
+> Hyper-Threading). A compute die is 24 cores, so `c4-standard-48` is 48 vCPUs = 24 cores = one
+> full compute die.
 
 ### Practical guidance
 
@@ -108,8 +112,7 @@ A full 2-socket system is 6 compute dies and 6 NUMA nodes.
   laid out as 2 nodes per socket, so it uses 2 of the 3 compute dies on each socket. This
   matches the 2 sockets × 2 nodes layout of `c3-standard-192-metal`.
 - **`c4-standard-144` is the largest shape with no cross-socket traffic** (3 nodes, single socket).
-- Verify the topology on a running instance with `lscpu` or `numactl -H` — these are general Linux
-  tools, not something the source deck specifies.
+- Verify the topology on a running instance with `lscpu` or `numactl -H`.
 
 ---
 

@@ -46,7 +46,7 @@ each compute die is presented as its own NUMA node:
 
 ### Sockets by VM size
 
-| VM size | R6i sockets | R7i sockets | R8i sockets |
+| VM size | 6i sockets | 7i sockets | 8i sockets |
 | --- | --- | --- | --- |
 | 4xl | 1 | 1 | 1 |
 | 8xl | 1 | 1 | 1 |
@@ -57,11 +57,11 @@ each compute die is presented as its own NUMA node:
 | 48xl | NA | 2 | 1 |
 | 96xl | NA | NA | 2 |
 
-> **Note** — R8i reaches 48xl within a **single socket**, where R7i needs two.
+> **Note** — 8i reaches 48xl within a **single socket**, where 7i needs two.
 
 ### NUMA nodes by VM size
 
-| VM size | R6i NUMA | R7i NUMA | R8i NUMA |
+| VM size | 6i NUMA | 7i NUMA | 8i NUMA |
 | --- | --- | --- | --- |
 | 4xl | 1 | 1 | 1 |
 | 8xl | 1 | 1 | 1 |
@@ -86,7 +86,7 @@ each compute die is presented as its own NUMA node:
 | 96xl | 384 | 2 | **6** | 64 | 32 | Full system (6 compute dies) |
 
 > **Note** — the vCPUs/node and Cores/node columns are derived (vCPUs ÷ NUMA nodes, halved for
-> Hyper-Threading); the source deck states sockets, NUMA nodes, and die coverage directly.
+> Hyper-Threading).
 
 ### Practical guidance
 
@@ -94,9 +94,8 @@ each compute die is presented as its own NUMA node:
 - **24xl and 32xl span 2 nodes**, 48xl spans 3 nodes within one socket, and 96xl spans 6 nodes
   across 2 sockets. 48xl is the largest size with no cross-socket traffic.
 - **Node width is not always 32 cores.** 24xl is built from 2 *partial* dies (24 cores each), so a
-  node there exposes fewer cores than a full die. Don't assume a uniform 32 cores/node across sizes.
-- Verify the topology on a running instance with `lscpu` or `numactl -H` — these are general Linux
-  tools, not something the source deck specifies.
+  node there exposes fewer cores than a full die.
+- Verify the topology on a running instance with `lscpu` or `numactl -H`.
 
 ---
 
